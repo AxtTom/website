@@ -4,11 +4,19 @@ import * as http from 'http';
 import express from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
-import { Site } from './site';
 import * as fs from 'fs';
 import * as socketio from 'socket.io';
 import { MongoClient } from 'mongodb';
 import { EasyMongo } from './easymongo';
+import * as ejs from 'ejs';
+import axios from 'axios';
+
+export interface Site {
+    name: string,
+    path: string,
+    hideInList?: boolean,
+    file: string
+}
 
 const mongo = new MongoClient('mongodb://localhost:27017');
 
@@ -27,7 +35,8 @@ async function main() {
     .use(helmet({
         contentSecurityPolicy: false
     }))
-    .use(cors());
+    .use(cors())
+    .set('view engine', 'ejs');
     const server = http.createServer(app);
     const io = new socketio.Server(server);
 
@@ -75,66 +84,46 @@ async function main() {
     app.use('/static', express.static('./static'));
     app.use('/downloads', express.static('./downloads'));
 
-    let sites: Site[] = [];
-    fs.readdirSync(__dirname + '/sites').filter(x => x.endsWith('.ts')).forEach((site) => {
-        sites.push(require(__dirname + '/sites/' + site).site);
-    });
-    const list = sites.map((site) => site.hideInList ? '' : `<a href="${site.path}"><li>${site.name}</li></a>`).join('');
+    let sites: Site[] = [
+        {
+            name: 'Home',
+            path: '/',
+            file: 'home.ejs'
+        },
+        {
+            name: 'Modpack',
+            path: '/modpack',
+            file: 'modpack.ejs'
+        },
+        {
+            name: 'Place',
+            path: '/place',
+            file: 'place.ejs',
+            hideInList: true
+        },
+        {
+            name: 'Imprint',
+            path: '/imprint',
+            file: 'imprint.ejs',
+            hideInList: true
+        },
+        {
+            name: 'Privacy',
+            path: '/privacy',
+            file: 'privacy.ejs',
+            hideInList: true
+        }
+    ];
 
     app.get('*', async (req, res) => {
         const site = sites.filter(site => site.path === '/' + req.url.split('/').filter(x => x !== '').join('/').split('?')[0])[0];
-        res.send(`<!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <meta http-equiv="X-UA-Compatible" content="IE=edge">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
-            <link href="/static/index.css" rel="stylesheet"></style>
-            <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" integrity="sha512-894YE6QWD5I59HgZOGReFYm4dnWc1Qt5NtvYSaNcOP+u1T9qYdvdihz0PPSiiqn/+/3e7Jo4EaG7TubfWGUrMQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-            <title>${site ? site.name: '404'} | AxtTom</title>
-            <script>
-            $(document).ready(() => {
-                $('#menu #button').on('click', () => {
-                    console.log('test')
-                    $('#menu #open').css('display', $('#menu #open').css('display') === 'none' ? 'block' : 'none');
-                    $('#menu #button img').attr('src', $('#menu #button img').attr('src') === '/static/svg/menu.svg' ? '/static/svg/close.svg' : '/static/svg/menu.svg');
-                });
-            });
-            </script>
-        </head>
-        <body>
-            <div id="header-left"></div>
-            <div id="header">AxtTom's Website</div>
-            <div id="header-right"></div>
-            <div id="main">${site ? await site.render(req, res) : '<h1 style="text-align: center;">Not Found</h1>'}</div>
-            <div id="sidebar">
-                <div id="Sidebar">
-                    <ul id="top">
-                        ${list}
-                    </ul>
-                    <ul id="bottom">
-                        <a href="/imprint"><li>Imprint</li></a>
-                        <a href="/privacy"><li>Privacy</li></a>
-                    </ul>
-                </div>
-            </div>
-            <div id="menu">
-                <div id="open" style="display: none;"> 
-                    <ul id="top">
-                        ${list}
-                    </ul>
-                    <ul id="bottom">
-                        <a href="/imprint"><li>Imprint</li></a>
-                        <a href="/privacy"><li>Privacy</li></a>
-                    </ul>
-                </div>
-                <div id="button">
-                    <img src="/static/svg/menu.svg">
-                </div>
-            </div>
-        </body>
-        </html>`);
+        const html = await ejs.renderFile(__dirname + '/ejs/index.ejs', {
+            axios,
+            sites,
+            site,
+            placeTime: global.placeTime
+        }, { async: true });
+        res.send(html);
         res.end();
     });
 

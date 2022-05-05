@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+    <link href="/static/index.css" rel="stylesheet"></style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" integrity="sha512-894YE6QWD5I59HgZOGReFYm4dnWc1Qt5NtvYSaNcOP+u1T9qYdvdihz0PPSiiqn/+/3e7Jo4EaG7TubfWGUrMQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <title><%=site ? site.name : '404'%> | AxtTom</title>
+    <script>
+    $(document).ready(() => {
+        $('#menu #button').on('click', () => {
+            $('#menu #open').css('display', $('#menu #open').css('display') === 'none' ? 'block' : 'none');
+            $('#menu #button img').attr('src', $('#menu #button img').attr('src') === '/static/svg/menu.svg' ? '/static/svg/close.svg' : '/static/svg/menu.svg');
+        });
+    });
+    </script>
+</head>
+<body>
+    <div id="header-left"></div>
+    <div id="header">AxtTom's Website</div>
+    <div id="header-right"></div>
+    <div id="main"><%-site ? await include(site.file) : '<h1 style="text-align: center;">Not Found</h1>'%></div>
+    <div id="sidebar">
+        <div id="Sidebar">
+            <ul id="top">
+                <%-sites.filter(s => !s.hideInList).map(s => `<a href="${s.path}"><li>${s.name}</li></a>`).join('')%> 
+            </ul>
+            <ul id="bottom">
+                <a href="/imprint"><li>Imprint</li></a>
+                <a href="/privacy"><li>Privacy</li></a>
+            </ul>
+        </div>
+    </div>
+    <div id="menu">
+        <div id="open" style="display: none;"> 
+            <ul id="top">
+                <%-sites.filter(s => !s.hideInList).map(s => `<a href="${s.path}"><li>${s.name}</li></a>`).join('')%> 
+            </ul>
+            <ul id="bottom">
+                <a href="/imprint"><li>Imprint</li></a>
+                <a href="/privacy"><li>Privacy</li></a>
+            </ul>
+        </div>
+        <div id="button">
+            <img src="/static/svg/menu.svg">
+        </div>
+    </div>
+</body>
+</html>
