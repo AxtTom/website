@@ -1,0 +1,5 @@
+.vscode/
+downloads/*
+logs/
+node_modules/
+place.txt

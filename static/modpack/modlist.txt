@@ -1,0 +1,154 @@
+AI-Improvements
+Artifacts
+AttributeFix
+YUNG's Better Caves
+YUNG's Better Dungeons
+YUNG's Better Mineshafts
+YUNG's Better Strongholds
+Block Armor
+Bookshelf
+Botania
+Brandon's Core
+ConnectedTexturesMod
+Chisel
+Clumps
+CodeChicken Lib
+Controlling
+CosmeticArmorReworked
+Cucumber Library
+Ding
+Draconic Additions
+Draconic Evolution
+Enchanting Infuser
+EnchantmentDescriptions
+EnderStorage
+Epic Fight Mod
+Extra Storage
+Extreme Reactors
+FastFurnace
+FastLeafDecay
+Fast Workbench
+Waila
+Just Enough Calculation
+Just Enough Professions (JEP)
+Just Enough Resources
+Mantle
+Mekanism
+Mekanism: Additions
+Mekanism: Generators
+Mekanism: Tools
+Morpheus
+Mouse Tweaks
+Mystical Agradditions
+Mystical Agriculture
+NetherPortalFix
+Patchouli
+Phi
+Placebo
+Placebo
+Puzzles Lib
+Refined Storage Large Patterns
+ReAuth
+Simple Storage Network
+Simply Jetpacks 2
+Storage for ComputerCraft
+Storage Drawers
+Tinkers' Construct
+Toast Control
+Vampires Need Umbrellas
+Vampirism
+Teamlapen Library
+Vampirism Integrations
+Waila Harvestability
+Waystones
+YUNG's API
+YUNG's Bridges
+YUNG's Extras
+Zero CORE 2
+Advanced Peripherals
+AppleSkin
+Architectury
+Balanced Enchanting
+Better Biome Blend
+BlockCarpentry
+CC: Tweaked
+MrCrayfish's Furniture Mod
+MrCrayfish's Gun Mod
+Chisels & bits
+CoFH Core
+Comforts
+Compact Machines 4
+Configured
+Curios API
+Elevator Mod
+Ender Crop
+EnderTanks
+EndPoint
+ExpandAbility
+Extra Disks
+Ferrite Core
+FTB Backups
+FTB Chunks
+FTB Essentials
+FTB Library
+FTB Teams
+FTB Ultimine
+Gravestone Mod
+Industrial Foregoing
+Inventory Pets 
+Inventory Tweaks Renewed
+Iron Chests
+Iron Furnaces
+Just Enough Items
+Journeymap
+LazyDFU
+Magical Psi
+Magnesium
+McJtyLib
+Macaw's Bridges
+Macaw's Doors
+Macaw's Fences and Walls
+Macaw's Furniture
+Macaw's Lights and Lamps
+Macaw's Paintings
+Macaw's Roofs
+Macaw's Trapdoors
+Macaw's Windows
+Mining World
+More Dragon Eggs
+More Overlays Updated
+Obfuscate
+Pam's HarvestCraft 2 Crops
+Pam's HarvestCraft 2 Food Core
+Pam's HarvestCraft 2 Food Extended
+Pam's HarvestCraft 2 Fruit Trees
+Performant
+Pipez
+Polymorph
+Potion ID Packet Fixer
+Psionicolor
+Psionic Peripherals
+RandomPatches
+Refined Storage
+Refined Storage Addons
+RFToolsBase
+RFToolsControl
+RFToolsDimensions
+RFToolsUtility
+RSRequestify
+ShetiPhian-Core
+Smooth Boot
+spark
+Thermal Expansion
+Thermal Series
+Thermal Foundation
+Thermal Innovation
+Titanium
+U Team Core
+Useful Backpacks
+MrCrayfish's Vehicle Mod
+Witchery: The Rewitchening
+XL Packets
+CraftTweaker
+ConstructionWand
+TrashCans

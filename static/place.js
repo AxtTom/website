@@ -1,0 +1,226 @@
+$(document).ready(() => {
+    function color(i) {
+        switch (i) {
+            case '0': // white
+                return '#ffffff';
+            case '1': // yellow
+                return '#ffff00';
+            case '2': // orange
+                return '#ff8800';
+            case '3': // red
+                return '#ff0000';
+            case '4': // magenta
+                return '#ff00ff';
+            case '5': // purple
+                return '#8800ff';
+            case '6': // blue
+                return '#0000ff';
+            case '7': // cyan
+                return '#00ffff';
+            case '8': // green
+                return '#00ff00';
+            case '9': // dark green
+                return '#008800';
+            case 'a': // brown
+                return '#884400';
+            case 'b': // tan
+                return '#ffcc99';
+            case 'c': // light gray
+                return '#cccccc';
+            case 'd': // medium gray
+                return '#999999';
+            case 'e': // dark gray
+                return '#666666';
+            case 'f': // black
+                return '#000000';
+
+            default:
+                return '#ffffff';
+        }
+    }
+
+    let place = '';
+    for (let x = 0; x < 100; x++) {
+        for (let y = 0; y < 100; y++) {
+            place += '0';
+        }
+    }
+    let icolor = '-1';
+    let cursor = '#00000044';
+    let time = 0;
+    let zoom = 1;
+    let posX = 0;
+    let posY = 0;
+
+    let socket = io();
+
+    const params = (new URL(document.location)).searchParams;
+    let secret = params.get('id');
+    if (secret) {
+        Cookies.set('secret', secret);
+        document.location.href = document.location.origin + document.location.pathname
+    }
+    else {
+        secret = Cookies.get('secret');
+    }
+    console.log(secret);
+
+    let mx = -1;
+    let my = -1;
+    let canvas = document.getElementById('canvas');
+    canvas.style.backgroundColor = '#ffffff';
+
+    const posElement = document.createElement('button');
+    function render() {
+        canvas.width = $('#main').width();
+        canvas.height = $('#main').width();
+
+        if (posX > 0) posX = 0;
+        if (posY > 0) posY = 0;
+        if (posX < (100 / zoom) - 100) posX = (100 / zoom) - 100;
+        if (posY < (100 / zoom) - 100) posY = (100 / zoom) - 100;
+        console.log(posX + ' ' + posY);
+        
+        const w = canvas.width / 100 * zoom;
+        
+        let ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        for (let x = 0; x < 100; x++) {
+            for (let y = 0; y < 100; y++) {
+                ctx.fillStyle = color(place.charAt(x + y * 100));
+                ctx.fillRect((x + Math.floor(posX)) * w, (y + Math.floor(posY)) * w, w, w);
+            }
+        }
+
+        const cx = Math.round((mx - w / 2) / w) - Math.floor(posX);
+        const cy = Math.round((my - w / 2) / w) - Math.floor(posY);
+        
+        ctx.fillStyle = cursor;
+        ctx.fillRect((cx + Math.floor(posX)) * w, (cy + Math.floor(posY)) * w, w, w);
+        posElement.innerHTML = `X: ${cx}, Y: ${cy}`;
+        //ctx.fillRect((Math.floor(mx / w)) * w, (Math.floor(my / w)) * w, w, w);
+    }
+
+    let noDrag = (e) => {
+        mx = e.offsetX;
+        my = e.offsetY;
+        render();
+    };
+    canvas.onmousemove = noDrag;
+    window.onresize = () => {
+        render();
+    };
+    setInterval(() => {
+        render();
+        if (time > Date.now()) {
+            $('#time').text(Math.floor((time - Date.now()) / 1000) + 's');
+        }
+    }, 1000);
+
+    socket.on('connect', () => {
+        console.log('connected');
+        render();
+        if (secret) {
+            $('#secret').text(secret.slice(0, 8));
+            $('#time').text('0s');
+        }
+
+        socket.on('placeAll', (data) => {
+            place = data;
+        });
+
+        socket.on('place', (data) => {
+            place = place.substr(0, data.x + data.y * 100) + data.color + place.substr(data.x + data.y * 100 + 1);
+            if (data.id == socket.id) {
+                cursor = '#ff000044';
+                setTimeout(() => {
+                    cursor = '#00000044';
+                }, 1000 * placeTime);
+                time = Date.now() + 1000 * placeTime;
+            }
+        });
+
+        let clickTime = 0;
+        let oldX = -1;
+        let oldY = -1;
+        canvas.onmousedown = (e) => {
+            clickTime = Date.now();
+            canvas.onmousemove = (e2) => {
+                noDrag(e2);
+                if (oldX == -1) oldX = e2.offsetX;
+                if (oldY == -1) oldY = e2.offsetY;
+                posX += (e2.offsetX - oldX) * 0.25 / zoom;
+                posY += (e2.offsetY - oldY) * 0.25 / zoom;
+                oldX = e2.offsetX;
+                oldY = e2.offsetY;
+            };
+        };
+        canvas.onmouseup = (e) => {
+            if (Date.now() - clickTime < 300) {
+                if (!secret) return;
+
+                const mx = e.offsetX / zoom;
+                const my = e.offsetY / zoom;
+                const w = canvas.width / 100;
+                const x = Math.round((mx - w/2) / w) - Math.floor(posX);
+                const y = Math.round((my - w/2) / w) - Math.floor(posY);
+
+                socket.emit('place', {x: x, y: y, color: icolor, id: socket.id, secret: secret});
+            }
+            canvas.onmousemove = noDrag;
+            oldX = -1;
+            oldY = -1;
+        };
+    });
+
+    for (let i = 0; i < 16; i++) {
+        const b = document.createElement('button');
+        b.style.backgroundColor = color(i.toString(16));
+        b.style.width = '20px';
+        b.style.height = '20px';
+        b.style.border = '1px solid black';
+        b.onclick = () => {
+            icolor = i.toString(16);
+            let children = document.getElementById('buttons').children;
+            for (let i2 = 0; i2 < children.length; i2++) {
+                let tableChild = children[i2];
+                tableChild.style.border = '1px solid black';
+            }
+            b.style.border = '1px solid red';
+        };
+        document.getElementById('buttons').appendChild(b);
+    }
+    const plus = document.createElement('button');
+    document.getElementById('buttons').appendChild(plus);
+    const minus = document.createElement('button');
+    document.getElementById('buttons').appendChild(minus);
+    const zoomText = document.createElement('span');
+    document.getElementById('buttons').appendChild(zoomText);
+    document.getElementById('buttons').appendChild(posElement);
+    plus.innerText = '+';
+    plus.style.width = '20px';
+    plus.style.height = '20px';
+    plus.style.border = '1px solid black';
+    plus.onclick = () => {
+        zoom += 0.1;
+        render();
+        zoomText.innerHTML = 'Zoom: ' + Math.round(zoom * 100) + '%';
+    };
+    plus.style.float = 'right';
+    minus.innerText = '-';
+    minus.style.width = '20px';
+    minus.style.height = '20px';
+    minus.style.border = '1px solid black';
+    minus.onclick = () => {
+        zoom -= 0.1;
+        render();
+        zoomText.innerHTML = 'Zoom: ' + Math.round(zoom * 100) + '%';
+    }
+    minus.style.float = 'right';
+    zoomText.innerHTML = 'Zoom: ' + Math.round(zoom * 100) + '%';
+    zoomText.style.float = 'right';
+    posElement.style.float = 'right';
+    posElement.style.height = '20px';
+    posElement.style.border = '1px solid black';
+});

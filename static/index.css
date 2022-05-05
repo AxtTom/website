@@ -1,0 +1,157 @@
+@import url('https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&family=Open+Sans:wght@400;700&display=swap');
+
+a {
+    color: #8888ff;
+}
+a:hover {
+    color: #5555ff;
+}
+
+#menu #open {
+    overflow: hidden;
+    overflow-x: auto;
+    overflow-y: auto;
+    padding: 0;
+    margin: 0;
+    position: fixed;
+    right: 1em;
+    bottom: 4.5em;
+
+    border-radius: 1.5em;
+    background-color: rgb(31, 31, 31);
+}
+#menu #open ul {
+    padding: 0;
+    margin: 0;
+    list-style: none;
+}
+#menu #open ul li {
+    padding: 0.2em 1em;
+    margin: 0;
+}
+#menu #open ul a {
+    text-decoration: none;
+    color: #ffffff;
+    font-size: 2em;
+}
+#menu #open ul li:hover {
+    background-color: rgb(37, 37, 37);
+}
+
+#menu #button {
+    position: fixed;
+    right: 1em;
+    bottom: 1em;
+
+    background-color: rgb(31, 31, 31);
+    border-radius: 1.5em;
+    width: 3em;
+    height: 3em;
+}
+#menu #button img {
+    margin: 5%;
+    width: 90%;
+    height: 90%;
+}
+
+body {
+    font-family: 'Open Sans', sans-serif;
+}
+#header {
+    font-size: 1.5em;
+}
+#Sidebar {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100%;
+}
+#Sidebar ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+#Sidebar li {
+    padding: 4px;
+    font-size: 1.25em;
+}
+#Sidebar a {
+    color: #ffffff;
+    text-decoration: none;
+}
+#Sidebar li:hover {
+    background-color: rgb(37, 37, 37);
+}
+
+#header-left {
+    grid-area: header-left;
+}
+#header-right {
+    grid-area: header-right;
+}
+#header {
+    grid-area: header;
+    display: block;
+}
+
+#header-left, #header, #header-right {
+    background-color: rgb(31, 31, 31);
+    padding: 4px;
+}
+#main {
+    background-color: rgb(37, 37, 37);
+    padding: 12px;
+
+    overflow: hidden;
+    overflow-y: auto;
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+    
+    grid-area: main;
+    display: block;
+}
+#sidebar {
+    grid-area: sidebar;
+    display: block;
+}
+#menu {
+    display: none;
+}
+body {
+    margin: 0;
+    overflow: hidden;
+    position: fixed;
+    color: white;
+    background-color: rgb(46, 46, 46);
+    width: 100%;
+    height: 100%;
+
+    display: grid;
+    grid-template-areas:
+        "header-left header-left header header-right header-right"
+        "sidebar main-left main main-right main-right";
+    grid-template-columns: 125px 1fr 1000px 1fr 125px;
+    grid-template-rows: 40px auto;
+}
+
+@media only screen and (max-width: 1250px) {
+    body {
+        grid-template-columns: 125px 0 16fr 0 125px;
+    }
+}
+
+@media only screen and (max-width: 700px) {
+    #header, #sidebar {
+        display: none;
+    }
+    #menu {
+        display: block;
+    }
+    body {
+        grid-template-areas:
+            "main";
+        grid-template-columns: 1fr;
+        grid-template-rows: 1fr;
+        height: 100vh;
+    }
+}
