@@ -7,6 +7,20 @@ a:hover {
     color: #5555ff;
 }
 
+#header ul {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    padding: 0;
+    margin: 0;
+    list-style: none;
+}
+
+#header a {
+    text-decoration: none;
+    color: #ffffff;
+}
+
 #menu #open {
     overflow: hidden;
     overflow-x: auto;

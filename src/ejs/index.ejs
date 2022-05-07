@@ -7,6 +7,8 @@
     <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
     <link href="/static/index.css" rel="stylesheet"></style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" integrity="sha512-894YE6QWD5I59HgZOGReFYm4dnWc1Qt5NtvYSaNcOP+u1T9qYdvdihz0PPSiiqn/+/3e7Jo4EaG7TubfWGUrMQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.4.1/socket.io.js" integrity="sha512-MgkNs0gNdrnOM7k+0L+wgiRc5aLgl74sJQKbIWegVIMvVGPc1+gc1L2oK9Wf/D9pq58eqIJAxOonYPVE5UwUFA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-cookie/3.0.1/js.cookie.min.js" integrity="sha512-wT7uPE7tOP6w4o28u1DN775jYjHQApdBnib5Pho4RB0Pgd9y7eSkAV1BTqQydupYDB9GBhTcQQzyNMPMV3cAew==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <title><%=site ? site.name : '404'%> | AxtTom</title>
     <script>
     $(document).ready(() => {
@@ -19,7 +21,12 @@
 </head>
 <body>
     <div id="header-left"></div>
-    <div id="header">AxtTom's Website</div>
+    <div id="header">
+        <ul>
+            <a href="/"><li>AxtTom's Website</li></a>
+            <a href=<%=user ? "/profile" : "/login"%>><li><%=user ? user.username : 'Login'%><img src="/static/svg/account.svg" style="width: 1.5em; float: right; margin-left: 0.25em;"></li></a>
+        </ul>
+    </div>
     <div id="header-right"></div>
     <div id="main"><%-site ? await include(site.file) : '<h1 style="text-align: center;">Not Found</h1>'%></div>
     <div id="sidebar">
@@ -46,6 +53,7 @@
         <div id="button">
             <img src="/static/svg/menu.svg">
         </div>
+        <a href="/login" style="position: fixed; left: 1em; bottom: 1em; background-color: rgb(31, 31, 31); border-radius: 1.5em; width: 3em; height: 3em;"><img src="/static/svg/account.svg" style="margin: 5%; width: 90%; height: 90%;"></a>
     </div>
 </body>
 </html>

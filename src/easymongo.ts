@@ -21,6 +21,9 @@ class EasyMongo {
             }
         });
     }
+    public insert(data: Mongo.Document) {
+        return this.collection.insertOne(data);
+    }
     public unset(filter: Mongo.Filter<Mongo.Document>, data: Mongo.Document) {
         return this.collection.findOne(filter).then(doc => {
             if (doc) {

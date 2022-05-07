@@ -1,4 +1,5 @@
 require('./consolelog').config();
+import 'dotenv/config';
 
 import * as http from 'http';
 import express from 'express';
@@ -10,6 +11,10 @@ import { MongoClient } from 'mongodb';
 import { EasyMongo } from './easymongo';
 import * as ejs from 'ejs';
 import axios from 'axios';
+import cookieParser from 'cookie-parser';
+import multer from 'multer';
+import * as nodemailer from 'nodemailer';
+import * as crypto from 'crypto';
 
 export interface Site {
     name: string,
@@ -18,16 +23,30 @@ export interface Site {
     file: string
 }
 
+global.pending = [];
+
 const mongo = new MongoClient('mongodb://localhost:27017');
 
 async function main() {
     //#region Mongo Setup
+    console.log('Connecting to MongoDB...');
     await mongo.connect();
     console.log('Connected to MongoDB');
     
     const web = mongo.db('website');
     global.place = new EasyMongo(web.collection('place'));
+    global.users = new EasyMongo(web.collection('users'));
     //#endregion
+
+    global.mailer = nodemailer.createTransport({
+        host: 'mail.axttom.de',
+        port: 465,
+        secure: true,
+        auth: {
+            user: 'noreply@axttom.de',
+            pass: process.env.MAIL_PASSWORD
+        }
+    });
 
     // Configure HTTPS server
     const app = express()
@@ -36,7 +55,8 @@ async function main() {
         contentSecurityPolicy: false
     }))
     .use(cors())
-    .set('view engine', 'ejs');
+    .set('view engine', 'ejs')
+    .use(cookieParser());
     const server = http.createServer(app);
     const io = new socketio.Server(server);
 
@@ -112,16 +132,167 @@ async function main() {
             path: '/privacy',
             file: 'privacy.ejs',
             hideInList: true
+        },
+        {
+            name: 'Login',
+            path: '/login',
+            file: 'login.ejs',
+            hideInList: true
+        },
+        {
+            name: 'Register',
+            path: '/register',
+            file: 'register.ejs',
+            hideInList: true
+        },
+        {
+            name: 'Profile',
+            path: '/profile',
+            file: 'profile.ejs',
+            hideInList: true
         }
     ];
 
+    app.post('/login', multer().none(), async (req, res) => {
+        const { email, password } = req.body;
+
+        if (!email || !password) {
+            res.send({
+                success: false,
+                errors: [ 'Missing email or password' ]
+            });
+            res.end();
+        }
+        else {
+            const user = await global.users.get({ email });
+            if (!user) {
+                res.send({
+                    success: false,
+                    errors: [ 'Email not linked to an account' ]
+                });
+                res.end();
+            }
+            else {
+                const hash = crypto.createHash('sha256').update(password + email + process.env.PEPPER).digest('hex');
+                if (hash !== user.password) {
+                    res.send({
+                        success: false,
+                        errors: [ 'Wrong password' ]
+                    });
+                    res.end();
+                }
+                else {
+                    const token = crypto.randomBytes(32).toString('hex');
+                    global.users.set({ email }, { token }).then(() => {
+                        res.send({
+                            success: true,
+                            token
+                        });
+                        res.end();
+                    });
+                }
+            }
+        }
+    });
+    app.post('/register', multer().none(), async (req, res) => {
+        let errors: string[] = [];
+
+        if (!req.body.username || req.body.username == '') errors.push('Username is required');
+        if (!req.body.email || req.body.email == '') errors.push('Email is required');
+        if (!req.body.password || req.body.password.length != 2 || req.body.password[0] == '') errors.push('Password is required');
+        
+        if (errors.length > 0) {
+            res.send({
+                success: false,
+                errors
+            });
+        }
+        else {
+            if (req.body.username.length < 4) errors.push('Username must be at least 4 characters long');
+            if (req.body.username.length > 16) errors.push('Username must be at most 16 characters long');
+            if (!req.body.username.match(/^[a-zA-Z0-9_]+$/)) errors.push('Username contains invalid characters');
+            if (!req.body.email.match(/^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/))
+                errors.push('Email is not valid');
+            if (req.body.password[0].length < 8) errors.push('Password must be at least 8 characters long');
+            if (req.body.password[0].length > 32) errors.push('Password must be at most 32 characters long');
+            if (req.body.password[0] !== req.body.password[1]) errors.push('Passwords do not match');
+            if (!req.body.password[0].match(/[a-z]/)) errors.push('Password must contain at least one lowercase letter');
+            if (!req.body.password[0].match(/[A-Z]/)) errors.push('Password must contain at least one uppercase letter');
+            if (!req.body.password[0].match(/[0-9]/)) errors.push('Password must contain at least one number');
+            //if (!req.body.password[0].match(/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/)) errors.push('Password must contain at least one special character');
+            if (!req.body.password[0].match(/^[a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]+$/)) errors.push('Password contains invalid characters');
+
+            if (errors.length > 0) {
+                res.send({
+                    success: false,
+                    errors
+                });
+            }
+            else {
+                // Input correct
+                if (await global.users.has({ username: req.body.username })) {
+                    errors.push('Username is already taken');
+                }
+                if (await global.users.has({ email: req.body.email })) {
+                    errors.push('Email is already used by another account');
+                }
+
+                if (errors.length > 0) {
+                    res.send({
+                        success: false,
+                        errors
+                    });
+                }
+                else {
+                    const secret = crypto.randomBytes(20).toString('hex')
+                    global.mailer.sendMail({
+                        from: '"noreply" <noreply@axttom.de>',
+                        to: req.body.email,
+                        subject: 'Account activation',
+                        text: 'Confirm here: https://axttom.de/activation?secret=' + secret
+                    });
+                    global.pending = global.pending.filter(x => x.email !== req.body.email);
+                    global.pending.push({
+                        username: req.body.username,
+                        email: req.body.email,
+                        password: crypto.createHash('sha256').update(req.body.password[0] + req.body.email + process.env.PEPPER).digest('hex'),
+                        secret
+                    });
+                    res.send({
+                        success: true
+                    });
+                }
+            }
+        }
+
+        res.end();
+    });
+
+    app.get('/activation', async (req, res) => {
+        let user = global.pending.find(x => x.secret == req.query.secret);
+        if (user) {
+            global.users.insert({ username: user.username, email: user.email, password: user.password }).then(() => {
+                res.send('Activation successful');
+                res.end();
+            });
+        }
+        else {
+            res.send('Activation failed');
+            res.end();
+        }
+    });
+
     app.get('*', async (req, res) => {
         const site = sites.filter(site => site.path === '/' + req.url.split('/').filter(x => x !== '').join('/').split('?')[0])[0];
+        const user = req.cookies.token ? await global.users.get({ token: req.cookies.token }) : null;
         const html = await ejs.renderFile(__dirname + '/ejs/index.ejs', {
             axios,
+            global,
             sites,
             site,
-            placeTime: global.placeTime
+            cookies: req.cookies,
+            query: req.query,
+            user
         }, { async: true });
         res.send(html);
         res.end();

@@ -1,0 +1,70 @@
+<style>
+#login_field {
+    width: 100%;
+    display: flex;
+    justify-content: space-evenly;
+    flex-wrap: wrap;
+}
+#login_field form {
+    min-height: 12em;
+}
+#login_field input {
+    border: none 0;
+    margin: 0.25em 0;
+    padding: 0.1em;
+    font-size: 1.5em;
+    width: 12em;
+    box-sizing: border-box;
+    -moz-box-sizing: border-box;
+}
+</style>
+<script>
+    const checkLogin = () => {
+        const email = $('#email').val();
+        const password = $('#password').val();
+
+        let errors = [];
+
+        if (!email) errors.push('Email is required');
+        if (!password) errors.push('Password is required');
+
+        $('#errors').html(errors.join('<br>'));
+        return errors.length === 0;
+    }
+    $(document).ready(() => {
+        $('#login').submit((e) => {
+            e.preventDefault();
+            let form = $('#login')[0];
+            let formData = new FormData(form);
+            
+            if (checkLogin()) {
+                $.ajax({
+                    type: 'POST',
+                    url: '/login',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: (data) => {
+                        if (data.success) {
+                            Cookies.set('token', data.token, { sameSite: 'strict', secure: true });
+                            window.location.href = '/profile';
+                        }
+                        else {
+                            $('#errors').html(data.errors.join('<br>'));
+                        }
+                    }
+                });
+            }
+        });
+    });
+</script>
+<div id="login_field">
+    <form id="login" action="/login" method="post" enctype="multipart/form-data">
+        <input id="email" type="text" name="email" placeholder="Email"> <br>
+        <input id="password" type="password" name="password" placeholder="Password"> <br>
+        <input type="submit" value="Login"> <br>
+        <a href="/register">Don't have an account? Register here</a>
+    </form>
+</div>
+<div id="errors" style="color: red; text-align: center;"></div>
+<div id="output" style="color: green; text-align: center;"></div>
