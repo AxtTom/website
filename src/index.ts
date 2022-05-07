@@ -270,8 +270,9 @@ async function main() {
 
     app.get('/activation', async (req, res) => {
         let user = global.pending.find(x => x.secret == req.query.secret);
+        global.pending = global.pending.filter(x => x.secret !== req.query.secret);
         if (user) {
-            global.users.insert({ username: user.username, email: user.email, password: user.password }).then(() => {
+            global.users.set({ email: user.email }, { username: user.username, email: user.email, password: user.password }).then(() => {
                 res.send('Activation successful');
                 res.end();
             });

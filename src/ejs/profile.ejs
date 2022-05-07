@@ -1,1 +1,6 @@
-<%= user ? `Welcome, ${user.username}!` : 'You are not logged in!' %>
+<% if (user) { %>
+    <%=`Welcome, ${user.username}!`%>
+    <button onclick="Cookies.remove('token'); window.location.href='/'">Logout</button>
+<% } else { %>
+    You are not logged in!
+<% } %>
