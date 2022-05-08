@@ -151,6 +151,12 @@ async function main() {
             path: '/profile',
             file: 'profile.ejs',
             hideInList: true
+        },
+        {
+            name: 'Forgot Password',
+            path: '/forgotpassword',
+            file: 'forgotpassword.ejs',
+            hideInList: true
         }
     ];
 
@@ -329,6 +335,83 @@ async function main() {
         });
         global.sessions.removeAll({ user: user._id });
     });
+    app.post('/forgotpassword', multer().none(), async (req, res) => {
+        let errors = [];
+
+        if (req.body.type && req.body.type === 'email') {
+            if (!req.body.email) errors.push('Email is required');
+            else {
+                if (!(await global.users.has({ email: req.body.email }))) 
+                    errors.push('Email is not registered');
+            }
+
+            if (errors.length > 0) {
+                res.send({
+                    success: false,
+                    errors
+                });
+                res.end();
+                return;
+            }
+
+            const reset = crypto.randomBytes(20).toString('hex')
+            global.mailer.sendMail({
+                from: '"noreply" <noreply@axttom.de>',
+                to: req.body.email,
+                subject: 'Reset password',
+                text: 'Confirm here: https://axttom.de/forgotpassword?reset=' + reset
+            });
+            global.pending = global.pending.filter(x => x.email !== req.body.email);
+            global.pending.push({
+                email: req.body.email,
+                reset
+            });
+            res.send({
+                success: true
+            });
+            res.end();
+        }
+        if (req.body.type && req.body.type === 'password') {
+            const { password, cpassword } = req.body;
+
+            if (!password) errors.push('Password is required');
+            else {
+                if (password.length < 8) errors.push('Password must be at least 8 characters long');
+                if (password.length > 32) errors.push('Password must be at most 32 characters long');
+                if (password !== cpassword) errors.push('Passwords do not match');
+                if (!password.match(/[a-z]/)) errors.push('Password must contain at least one lowercase letter');
+                if (!password.match(/[A-Z]/)) errors.push('Password must contain at least one uppercase letter');
+                if (!password.match(/[0-9]/)) errors.push('Password must contain at least one number');
+                //if (!password.match(/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/)) errors.push('Password must contain at least one special character');
+                if (!password.match(/^[a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]+$/)) errors.push('Password contains invalid characters');
+            }
+
+            if (!req.body.reset) errors.push('Error resetting password');
+            else {
+                const pending = global.pending.find(x => x.reset === req.body.reset);
+                if (!pending) errors.push('Error resetting password');
+                else {
+                    const hash = crypto.createHash('sha256').update(password + pending.email + process.env.PEPPER).digest('hex');
+                    global.pending = global.pending.filter(x => x.email !== pending.email);
+                    global.users.set({ email: pending.email }, { password: hash }).then(() => {
+                        res.send({
+                            success: true
+                        });
+                        res.end();
+                    });
+                }
+            }
+
+            if (errors.length > 0) {
+                res.send({
+                    success: false,
+                    errors
+                });
+                res.end();
+                return;
+            }
+        }
+    });
 
     app.get('/activation', async (req, res) => {
         if (!req.query.secret) {
@@ -337,7 +420,7 @@ async function main() {
             return;
         }
         let user = global.pending.find(x => x.secret == req.query.secret);
-        global.pending = global.pending.filter(x => x.secret !== req.query.secret);
+        global.pending = global.pending.filter(x => x.email !== req.body.email);
         if (user) {
             global.users.set({ email: user.email }, { username: user.username, email: user.email, password: user.password }).then(() => {
                 res.send('Activation successful');

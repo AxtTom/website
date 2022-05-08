@@ -10,12 +10,7 @@ declare global {
 
     var mailer: nodemailer.Transporter;
 
-    var pending: {
-        username: string,
-        email: string,
-        password: string,
-        secret: string
-    }[];
+    var pending: any[];
 }
 
 export {};
