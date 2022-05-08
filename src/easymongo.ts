@@ -34,6 +34,9 @@ class EasyMongo {
     public remove(filter: Mongo.Filter<Mongo.Document>) {
         return this.collection.deleteOne(filter);
     }
+    public removeAll(filter: Mongo.Filter<Mongo.Document>) {
+        return this.collection.deleteMany(filter);
+    }
     public has(filter: Mongo.Filter<Mongo.Document>): Promise<boolean> {
         return new Promise((resolve, reject) => {
             this.collection.findOne(filter, (err, doc) => {

@@ -269,19 +269,86 @@ async function main() {
 
         res.end();
     });
+    app.post('/changepassword', multer().none(), async (req, res) => {
+        let errors = [];
+
+        const session = req.cookies.token ? await global.sessions.get({ token: req.cookies.token }) : null;
+        const user = session ? await global.users.get({ _id: session.user }) : null;
+
+        if (!user) errors.push('Not logged in');
+
+        if (errors.length > 0) {
+            res.send({
+                success: false,
+                errors
+            });
+            res.end();
+            return;
+        }
+
+        if (!req.body.oldpassword) errors.push('Password is required');
+        if (!req.body.newpassword || !req.body.cnewpassword) errors.push('New password is required');
+        else {
+            if (req.body.newpassword.length < 8) errors.push('Password must be at least 8 characters long');
+            if (req.body.newpassword.length > 32) errors.push('Password must be at most 32 characters long');
+            if (req.body.newpassword !== req.body.cnewpassword) errors.push('Passwords do not match');
+            if (!req.body.newpassword.match(/[a-z]/)) errors.push('Password must contain at least one lowercase letter');
+            if (!req.body.newpassword.match(/[A-Z]/)) errors.push('Password must contain at least one uppercase letter');
+            if (!req.body.newpassword.match(/[0-9]/)) errors.push('Password must contain at least one number');
+            //if (!req.body.newpassword.match(/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/)) errors.push('Password must contain at least one special character');
+            if (!req.body.newpassword.match(/^[a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]+$/)) errors.push('Password contains invalid characters');
+        }
+
+        if (errors.length > 0) {
+            res.send({
+                success: false
+            });
+            res.end();
+            return;
+        }
+
+        if (crypto.createHash('sha256').update(req.body.oldpassword + user.email + process.env.PEPPER).digest('hex') !== user.password) 
+            errors.push('Password is not correct');
+
+        if (errors.length > 0) {
+            res.send({
+                success: false,
+                errors
+            });
+            res.end();
+            return;
+        }
+
+        const hash = crypto.createHash('sha256').update(req.body.newpassword + user.email + process.env.PEPPER).digest('hex');
+        global.users.set({ _id: user._id }, { password: hash }).then(() => {
+            res.send({
+                success: true,
+                errors
+            });
+            res.end();
+        });
+        global.sessions.removeAll({ user: user._id });
+    });
 
     app.get('/activation', async (req, res) => {
+        if (!req.query.secret) {
+            res.send('Activation failed');
+            res.end();
+            return;
+        }
         let user = global.pending.find(x => x.secret == req.query.secret);
         global.pending = global.pending.filter(x => x.secret !== req.query.secret);
         if (user) {
             global.users.set({ email: user.email }, { username: user.username, email: user.email, password: user.password }).then(() => {
                 res.send('Activation successful');
                 res.end();
+                return;
             });
         }
         else {
             res.send('Activation failed');
             res.end();
+            return;
         }
     });
 

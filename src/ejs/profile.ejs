@@ -55,14 +55,13 @@
                 if (checkChange()) {
                     $.ajax({
                         type: 'POST',
-                        url: '/change',
+                        url: '/changepassword',
                         data: formData,
                         processData: false,
                         contentType: false,
                         success: (data) => {
                             if (data.success) {
-                                Cookies.set('token', data.token, { sameSite: 'strict' });
-                                window.location.href = '/profile';
+                                window.location.href = '/login';
                             }
                             else {
                                 $('#errors').html(data.errors.join('<br>'));
@@ -83,7 +82,7 @@
             <input id="password" type="password" name="oldpassword" placeholder="Old password">
             <input type="submit" value="Change password"> <br>
             <input id="newpassword" type="password" name="newpassword" placeholder="New password">
-            <input id="cnewpassword" type="password" name="confirmpassword" placeholder="Confirm password">
+            <input id="cnewpassword" type="password" name="cnewpassword" placeholder="Confirm password">
         </form>
         <div id="errors" style="color: red; font-size: 0.8em;"></div>
         <hr>
