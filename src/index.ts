@@ -36,6 +36,7 @@ async function main() {
     const web = mongo.db('website');
     global.place = new EasyMongo(web.collection('place'));
     global.users = new EasyMongo(web.collection('users'));
+    global.sessions = new EasyMongo(web.collection('sessions'));
     //#endregion
 
     global.mailer = nodemailer.createTransport({
@@ -165,6 +166,7 @@ async function main() {
         }
         else {
             const user = await global.users.get({ email });
+
             if (!user) {
                 res.send({
                     success: false,
@@ -183,7 +185,7 @@ async function main() {
                 }
                 else {
                     const token = crypto.randomBytes(32).toString('hex');
-                    global.users.set({ email }, { token }).then(() => {
+                    global.sessions.set({ token }, { token, user: user._id, created: Date.now() }).then(() => {
                         res.send({
                             success: true,
                             token
@@ -285,7 +287,11 @@ async function main() {
 
     app.get('*', async (req, res) => {
         const site = sites.filter(site => site.path === '/' + req.url.split('/').filter(x => x !== '').join('/').split('?')[0])[0];
-        const user = req.cookies.token ? await global.users.get({ token: req.cookies.token }) : null;
+        const session = req.cookies.token ? await global.sessions.get({ token: req.cookies.token }) : null;
+        const user = session ? await global.users.get({ _id: session.user }) : null;
+        if (user) {
+            global.sessions.set({ _id: session._id }, { lastUsed: Date.now() });
+        }
         const html = await ejs.renderFile(__dirname + '/ejs/index.ejs', {
             axios,
             global,
@@ -299,7 +305,7 @@ async function main() {
         res.end();
     });
 
-    server.listen(8445, 'localhost', () => {
+    server.listen(8445, process.env.DEBUG  ? '0.0.0.0' : 'localhost', () => {
         console.log('Server running!');
     });
 

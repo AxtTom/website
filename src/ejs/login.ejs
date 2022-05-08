@@ -46,7 +46,7 @@
                     contentType: false,
                     success: (data) => {
                         if (data.success) {
-                            Cookies.set('token', data.token, { sameSite: 'strict', secure: true });
+                            Cookies.set('token', data.token, { sameSite: 'strict' });
                             window.location.href = '/profile';
                         }
                         else {
@@ -63,6 +63,7 @@
         <input id="email" type="text" name="email" placeholder="Email"> <br>
         <input id="password" type="password" name="password" placeholder="Password"> <br>
         <input type="submit" value="Login"> <br>
+        <a href="/forgotpassword">Forgot password?</a> <br> 
         <a href="/register">Don't have an account? Register here</a>
     </form>
 </div>

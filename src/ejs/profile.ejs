@@ -1,6 +1,94 @@
 <% if (user) { %>
-    <%=`Welcome, ${user.username}!`%>
-    <button onclick="Cookies.remove('token'); window.location.href='/'">Logout</button>
+    <style>
+        #profile {
+            font-size: 1.2em;
+        }
+        #profile * {
+            font-size: 1em;
+        }
+        #profile input {
+            border: none;
+            border: none;
+            margin: 0.1em 0;
+            box-sizing: border-box;
+            -moz-box-sizing: border-box;
+            width: 12em;
+        }
+        #profile #logout {
+            text-align: center;
+            background-color: #ff2222;
+        }
+        #profile #logout:hover {
+            background-color: #ff4444;
+        }
+    </style>
+    <script>
+        const checkChange = () => {
+            const password = $('#password').val();
+            const newpassword = $('#newpassword').val();
+            const cnewpassword = $('#cnewpassword').val();
+    
+            let errors = [];
+    
+            if (!password) errors.push('Password is required');
+            if (!newpassword) errors.push('New password is required');
+            else {
+                if (newpassword.length < 8) errors.push('Password must be at least 8 characters long');
+                if (newpassword.length > 32) errors.push('Password must be at most 32 characters long');
+                if (newpassword !== cnewpassword) errors.push('Passwords do not match');
+                if (!newpassword.match(/[a-z]/)) errors.push('Password must contain at least one lowercase letter');
+                if (!newpassword.match(/[A-Z]/)) errors.push('Password must contain at least one uppercase letter');
+                if (!newpassword.match(/[0-9]/)) errors.push('Password must contain at least one number');
+                //if (!newpassword.match(/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/)) errors.push('Password must contain at least one special character');
+                if (!newpassword.match(/^[a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]+$/)) errors.push('Password contains invalid characters');
+            }
+    
+            $('#errors').html(errors.join('<br>'));
+            return errors.length === 0;
+        }
+        $(document).ready(() => {
+            $('#change').submit((e) => {
+                e.preventDefault();
+                let form = $('#change')[0];
+                let formData = new FormData(form);
+                
+                if (checkChange()) {
+                    $.ajax({
+                        type: 'POST',
+                        url: '/change',
+                        data: formData,
+                        processData: false,
+                        contentType: false,
+                        success: (data) => {
+                            if (data.success) {
+                                Cookies.set('token', data.token, { sameSite: 'strict' });
+                                window.location.href = '/profile';
+                            }
+                            else {
+                                $('#errors').html(data.errors.join('<br>'));
+                            }
+                        }
+                    });
+                }
+            });
+        });
+    </script>
+    <div id="profile">
+        Welcome, <%=user.username%>!
+        <hr>
+        Email: <%=user.email%>
+        <hr>
+        Change password:
+        <form id="change" action="/changepassword" method="POST" oninput="checkChange();">
+            <input id="password" type="password" name="oldpassword" placeholder="Old password">
+            <input type="submit" value="Change password"> <br>
+            <input id="newpassword" type="password" name="newpassword" placeholder="New password">
+            <input id="cnewpassword" type="password" name="confirmpassword" placeholder="Confirm password">
+        </form>
+        <div id="errors" style="color: red; font-size: 0.8em;"></div>
+        <hr>
+        <input id="logout" type="button" value="Logout" onclick="Cookies.remove('token'); window.location.href='/'">
+    </div>
 <% } else { %>
     You are not logged in!
 <% } %>

@@ -53,7 +53,7 @@
         <div id="button">
             <img src="/static/svg/menu.svg">
         </div>
-        <a href="/login" style="position: fixed; left: 1em; bottom: 1em; background-color: rgb(31, 31, 31); border-radius: 1.5em; width: 3em; height: 3em;"><img src="/static/svg/account.svg" style="margin: 5%; width: 90%; height: 90%;"></a>
+        <a href=<%=user ? "/profile" : "/login"%> style="position: fixed; left: 1em; bottom: 1em; background-color: rgb(31, 31, 31); border-radius: 1.5em; width: 3em; height: 3em;"><img src="/static/svg/account.svg" style="margin: 5%; width: 90%; height: 90%;"></a>
     </div>
 </body>
 </html>

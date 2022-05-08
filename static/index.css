@@ -68,7 +68,7 @@ a:hover {
     height: 90%;
 }
 
-body {
+* {
     font-family: 'Open Sans', sans-serif;
 }
 #header {
