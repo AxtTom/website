@@ -59,7 +59,7 @@
     });
 </script>
 <div id="login_field">
-    <form id="login" method="post" enctype="multipart/form-data">
+    <form id="login" oninput="checkLogin();">
         <input id="email" type="text" name="email" placeholder="Email"> <br>
         <input id="password" type="password" name="password" placeholder="Password"> <br>
         <input type="submit" value="Login"> <br>

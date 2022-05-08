@@ -78,7 +78,7 @@
         Email: <%=user.email%>
         <hr>
         Change password:
-        <form id="change" action="/changepassword" method="POST" oninput="checkChange();">
+        <form id="change" oninput="checkChange();">
             <input id="password" type="password" name="oldpassword" placeholder="Old password">
             <input type="submit" value="Change password"> <br>
             <input id="newpassword" type="password" name="newpassword" placeholder="New password">
