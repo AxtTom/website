@@ -10,6 +10,9 @@ class EasyMongo {
     public get(filter: Mongo.Filter<Mongo.Document>): Promise<Mongo.WithId<Mongo.Document>> {
         return this.collection.findOne(filter);
     }
+    public getAll(): Promise<Mongo.WithId<Mongo.Document>[]> {
+        return this.collection.find().toArray();
+    }
     public set(filter: Mongo.Filter<Mongo.Document>, data: Mongo.Document) {
         return this.collection.findOne(filter).then(doc => {
             if (doc) {

@@ -1,0 +1,35 @@
+<style>
+    #admin #users table {
+        max-height: 36em;
+        overflow-x: auto;
+        overflow-y: auto;
+    }
+    #admin #users table, #admin #users table tr, #admin #users table tr td {
+        border: 1px solid black;
+    }
+</style>
+<div id="admin">
+    <div id="users">
+        Users:
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                </tr>
+            </thead>
+        
+            <tbody>
+                <% let users = await global.users.getAll() %>
+                <% for (var i = 0; i < users.length; i++) { %>
+                <tr>
+                    <td><%= users[i]._id %></td>
+                    <td><%= users[i].username %></td>
+                    <td><%= users[i].email %></td>
+                </tr>
+                <% } %>
+            </tbody>
+        </table>
+    </div>
+</div>

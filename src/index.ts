@@ -19,8 +19,10 @@ import * as crypto from 'crypto';
 export interface Site {
     name: string,
     path: string,
+    file: string,
+    icon?: string,
     hideInList?: boolean,
-    file: string
+    adminOnly?: boolean,
 }
 
 global.pending = [];
@@ -105,7 +107,7 @@ async function main() {
     app.use('/static', express.static('./static'));
     app.use('/downloads', express.static('./downloads'));
 
-    let sites: Site[] = [
+    let rawSites: Site[] = [
         {
             name: 'Home',
             path: '/',
@@ -157,6 +159,13 @@ async function main() {
             path: '/forgotpassword',
             file: 'forgotpassword.ejs',
             hideInList: true
+        },
+
+        {
+            name: 'Admin',
+            path: '/admin',
+            file: 'admin.ejs',
+            adminOnly: true
         }
     ];
 
@@ -442,9 +451,12 @@ async function main() {
     });
 
     app.get('*', async (req, res) => {
-        const site = sites.filter(site => site.path === '/' + req.url.split('/').filter(x => x !== '').join('/').split('?')[0])[0];
         const session = req.cookies.token ? await global.sessions.get({ token: req.cookies.token }) : null;
         const user = session ? await global.users.get({ _id: session.user }) : null;
+        
+        const sites = rawSites.filter(x => !x.adminOnly || (user && user.admin));
+        const site = sites.filter(site => site.path === '/' + req.url.split('/').filter(x => x !== '').join('/').split('?')[0])[0];
+        
         if (user) {
             global.sessions.set({ _id: session._id }, { lastUsed: Date.now() });
         }
