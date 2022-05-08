@@ -391,14 +391,20 @@ async function main() {
                 const pending = global.pending.find(x => x.reset === req.body.reset);
                 if (!pending) errors.push('Error resetting password');
                 else {
-                    const hash = crypto.createHash('sha256').update(password + pending.email + process.env.PEPPER).digest('hex');
+                    const user = await global.users.get({ email: pending.email });
                     global.pending = global.pending.filter(x => x.email !== pending.email);
-                    global.users.set({ email: pending.email }, { password: hash }).then(() => {
-                        res.send({
-                            success: true
+
+                    if (!user) errors.push('Error resetting password');
+                    else {
+                        const hash = crypto.createHash('sha256').update(password + user.email + process.env.PEPPER).digest('hex');
+                        global.users.set({ email: user.email }, { password: hash }).then(() => {
+                            res.send({
+                                success: true
+                            });
+                            res.end();
                         });
-                        res.end();
-                    });
+                        global.sessions.removeAll({ user: user._id });
+                    }
                 }
             }
 
