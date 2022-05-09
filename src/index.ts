@@ -435,8 +435,8 @@ async function main() {
             return;
         }
         let user = global.pending.find(x => x.secret == req.query.secret);
-        global.pending = global.pending.filter(x => x.email !== req.body.email);
-        if (user) {
+	if (user) {
+            global.pending = global.pending.filter(x => x.email !== user.email);
             global.users.set({ email: user.email }, { username: user.username, email: user.email, password: user.password }).then(() => {
                 res.send('Activation successful');
                 res.end();

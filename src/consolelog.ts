@@ -47,7 +47,7 @@ function config() {
                 '[' + today.getHours().toString().padStart(2, '0') + 
                 ":" + today.getMinutes().toString().padStart(2, '0') + 
                 ":" + today.getSeconds().toString().padStart(2, '0') + 
-                ']' + JSON.stringify(x) + 
+                ']' + x + 
                 '\n'
             );
         }
@@ -60,7 +60,7 @@ function config() {
                 '[' + today.getHours().toString().padStart(2, '0') + 
                 ":" + today.getMinutes().toString().padStart(2, '0') + 
                 ":" + today.getSeconds().toString().padStart(2, '0') + 
-                ']' + x + 
+                ']' + JSON.stringify(x) + 
                 '\n'
             );
         }
