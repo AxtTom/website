@@ -7,6 +7,7 @@ declare global {
     var place: EasyMongo;
     var users: EasyMongo;
     var sessions: EasyMongo;
+    var chat: EasyMongo;
 
     var mailer: nodemailer.Transporter;
 

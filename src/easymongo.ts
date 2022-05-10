@@ -7,6 +7,10 @@ class EasyMongo {
         this.collection = collection;
     }
 
+    public raw(): Mongo.Collection<Mongo.Document> {
+        return this.collection;
+    }
+
     public get(filter: Mongo.Filter<Mongo.Document>): Promise<Mongo.WithId<Mongo.Document>> {
         return this.collection.findOne(filter);
     }

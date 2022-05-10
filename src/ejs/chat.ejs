@@ -1,0 +1,109 @@
+<% if (!user) { %>
+    <h1>Please login</h1>
+<% } else { %>
+    <script>
+        const escapeHtml = (unsafe) => {
+            return unsafe.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#039;');
+        }
+
+        $(document).ready(() => {
+            $('#input').submit((e) => {
+                e.preventDefault();
+            });
+        });
+
+        let socket = io();
+
+        socket.on('connect', () => {
+            socket.emit('chatJoin', { token: '<%= session.token %>' });
+
+            socket.on('chatInit', (data) => {
+                if (!data.messages) return;
+
+                $('#chat').html('');
+                data.messages.reverse().forEach((message) => {
+                    $('#chat').append(
+                        $('<div>').prop({
+                            className: 'message',
+                            innerHTML: `<div class="username" style="color: ${message.user === '<%=user.username%>' ? 'lightblue' : 'white'};">${message.user}</div> <div class="msgcontent">${escapeHtml(message.msg)}</div>`
+                        })
+                    );
+                });
+            });
+            socket.on('chatMsg', (data) => {
+                if (!data.user || !data.msg) return;
+                
+                $('#chat').prepend(
+                    $('<div>').prop({
+                        className: 'message',
+                        innerHTML: `<div class="username" style="color: ${data.user === '<%=user.username%>' ? 'lightblue' : 'white'};">${data.user}</div> <div class="msgcontent">${escapeHtml(data.msg)}</div>`
+                    })
+                );
+            });
+
+            $(document).ready(() => {
+                $('#input').submit((e) => {
+                    e.preventDefault();
+
+                    socket.emit('chatMsg', {
+                        msg: $('#message').val(), 
+                        token: '<%= session.token %>',
+                    });
+                    $('#message').val('');
+                });
+            });
+        });
+    </script>
+    <style>
+        #chat {
+            overflow-y: scroll;
+            height: 80%;
+            border: black 1px solid;
+            display: flex;
+            flex-direction: column-reverse;
+        }
+
+        .message {
+            width: fit-content;
+            height: fit-content;
+            background-color: rgb(31, 31, 31);
+            margin: 5px;
+            padding: 5px;
+            border-radius: 12px;
+        }
+        .message .username {
+            font-weight: bold;
+        }
+        .message .msgcontent {
+            margin-left: 10px;
+        }
+
+        #input input {
+            border: none 0;
+            margin: 0;
+            padding: 0.1em;
+            font-size: 1em;
+            box-sizing: border-box;
+            -moz-box-sizing: border-box;
+        }
+        #input {
+            width: 100%;
+            display: flex;
+            align-items: stretch;
+        }
+        #message {
+            width: auto;
+            flex-grow: 4;
+        }
+        #send {
+            width: 20%;
+        }
+    </style>
+    <div id="chat">
+        
+    </div>
+    <form id="input">
+        <input type="text" id="message" placeholder="Message">
+        <input type="submit" id="send" value="Send">
+    </form>
+<% } %>

@@ -23,6 +23,7 @@ export interface Site {
     icon?: string,
     hideInList?: boolean,
     adminOnly?: boolean,
+    loginRequired?: boolean
 }
 
 global.pending = [];
@@ -39,6 +40,7 @@ async function main() {
     global.place = new EasyMongo(web.collection('place'));
     global.users = new EasyMongo(web.collection('users'));
     global.sessions = new EasyMongo(web.collection('sessions'));
+    global.chat = new EasyMongo(web.collection('chat'));
     //#endregion
 
     global.mailer = nodemailer.createTransport({
@@ -79,28 +81,42 @@ async function main() {
         fs.writeFileSync('place.txt', place);
     }, 1000);
     io.on('connection', (socket) => {
-        console.log(socket.id);
-        socket.emit('placeAll', place);
-        socket.on('place', async (data) => {
-            data.x = Math.round(data.x);
-            data.y = Math.round(data.y);
-            console.log(data);
-            if (!data.secret || !(await global.place.has({ secret: data.secret }))) return;
-            if (countdown.get(data.secret) && countdown.get(data.secret) > Date.now()) {
-
-            }
-            else {
-                if (data.x >= 0 && data.x < 100 && data.y >= 0 && data.y < 100 && parseInt(data.color, 16) >= 0 && parseInt(data.color, 16) < 16) {
-                    place = place.substr(0, data.y * 100 + data.x) + data.color + place.substr(data.y * 100 + data.x + 1);
-                    io.emit('place', {
-                        x: data.x,
-                        y: data.y,
-                        color: data.color,
-                        id: data.id
+        socket.on('chatJoin', (data) => {
+            global.chat.getAll().then(async (messages) => {
+                let msgs = [];
+                for (let msg of messages) {
+                    const user = await global.users.get({ _id: msg.user });
+                    if (!user) continue;
+                    msgs.push({
+                        user: user.username,
+                        msg: msg.msg
                     });
-                    countdown.set(data.secret, Date.now() + 1000 * global.placeTime);
                 }
-            }
+                socket.emit('chatInit', {
+                    messages: msgs
+                });
+            });
+
+
+            socket.on('chatMsg', async (data) => {
+                if (!data.msg || !data.token) return;
+
+                const session = await global.sessions.get({ token: data.token });
+                if (!session) return;
+                const user = await global.users.get({ _id: session.user });
+                if (!user) return;
+
+                io.emit('chatMsg', {
+                    msg: data.msg,
+                    user: user.username
+                });
+
+                global.chat.insert({
+                    msg: data.msg,
+                    user: user._id,
+                    time: new Date().getTime()
+                });
+            });
         });
     });
 
@@ -125,6 +141,13 @@ async function main() {
             hideInList: true
         },
         {
+            name: 'Chat',
+            path: '/chat',
+            file: 'chat.ejs',
+            loginRequired: true
+        },
+
+        {
             name: 'Imprint',
             path: '/imprint',
             file: 'imprint.ejs',
@@ -136,6 +159,7 @@ async function main() {
             file: 'privacy.ejs',
             hideInList: true
         },
+
         {
             name: 'Login',
             path: '/login',
@@ -467,6 +491,7 @@ async function main() {
             site,
             cookies: req.cookies,
             query: req.query,
+            session,
             user
         }, { async: true });
         res.send(html);
