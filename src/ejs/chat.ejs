@@ -14,6 +14,8 @@
 
         let socket = io();
 
+        const linkRegex = /https?:\/\/[a-zA-Z0-9.-]+\.[a-zA-Z]+(\/[a-zA-Z0-9?=\-_]+)?/g;
+
         socket.on('connect', () => {
             socket.emit('chatJoin', { token: '<%= session.token %>' });
 
@@ -25,7 +27,7 @@
                     $('#chat').append(
                         $('<div>').prop({
                             className: 'message',
-                            innerHTML: `<div class="username" style="color: ${message.user === '<%=user.username%>' ? 'lightblue' : 'white'};">${message.user}</div> <div class="msgcontent">${escapeHtml(message.msg)}</div>`
+                            innerHTML: `<div class="username" style="color: ${message.user === '<%=user.username%>' ? 'lightblue' : 'white'};">${message.user}</div> <div class="msgcontent">${escapeHtml(message.msg).replaceAll(linkRegex, '<a target="_blank" href="$&">$&</a>')}</div>`
                         })
                     );
                 });
@@ -36,7 +38,7 @@
                 $('#chat').prepend(
                     $('<div>').prop({
                         className: 'message',
-                        innerHTML: `<div class="username" style="color: ${data.user === '<%=user.username%>' ? 'lightblue' : 'white'};">${data.user}</div> <div class="msgcontent">${escapeHtml(data.msg)}</div>`
+                        innerHTML: `<div class="username" style="color: ${data.user === '<%=user.username%>' ? 'lightblue' : 'white'};">${data.user}</div> <div class="msgcontent">${escapeHtml(data.msg).replaceAll(linkRegex, '<a target="_blank" href="$&">$&</a>')}</div>`
                     })
                 );
             });
