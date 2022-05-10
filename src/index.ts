@@ -61,6 +61,7 @@ async function main() {
     }))
     .use(cors())
     .set('view engine', 'ejs')
+    .use(express.json())
     .use(cookieParser());
     const server = http.createServer(app);
     const io = new socketio.Server(server);
@@ -450,6 +451,59 @@ async function main() {
                 return;
             }
         }
+    });
+
+    app.post('/admin', async (req, res) => {
+        if (!req.body.token || !req.body.action) {
+            res.send({
+                success: false,
+                msg: 'Missing parameters'
+            });
+            res.end();
+            return;
+        }
+
+        const session = await global.sessions.get({ token: req.body.token });
+        if (!session) {
+            res.send({
+                success: false,
+                msg: 'Invalid session'
+            });
+            res.end();
+            return;
+        }
+        const user = await global.users.get({ _id: session.user });
+        if (!user) {
+            res.send({
+                success: false,
+                msg: 'Invalid session'
+            });
+            res.end();
+            return;
+        }
+
+        if (!user.admin) {
+            res.send({
+                success: false,
+                msg: 'Not an admin'
+            });
+            res.end();
+            return;
+        }
+
+        switch (req.body.action) {
+            case 'wipeChat':
+                global.chat.removeAll({});
+                res.send({
+                    success: true,
+                    msg: 'Chat wiped'
+                });
+                break;
+
+            default:
+                break;
+        }
+        res.end();
     });
 
     app.get('/activation', async (req, res) => {

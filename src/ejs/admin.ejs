@@ -7,7 +7,33 @@
     #admin #users table, #admin #users table tr, #admin #users table tr td {
         border: 1px solid black;
     }
+    #admin input {
+        border: none 0;
+        margin: 0.25em 0;
+        padding: 0.1em 0.5em;
+        font-size: 1.2em;
+        width: fit-content;
+        box-sizing: border-box;
+        -moz-box-sizing: border-box;
+    }
 </style>
+<script>
+    const wipeChat = () => {
+        $.ajax({
+            type: 'POST',
+            url: '/admin',
+            data: JSON.stringify({
+                token: '<%= session.token %>',
+                action: 'wipeChat'
+            }),
+            contentType: "application/json; charset=utf-8",
+            traditional: true,
+            success: (data) => {
+                $('#wipeChat').html(data.msg);
+            }
+        });
+    }
+</script>
 <div id="admin">
     <div id="users">
         Users:
@@ -32,4 +58,6 @@
             </tbody>
         </table>
     </div>
+    <br>
+    <input type="button" value="Wipe Chat" onclick="wipeChat()" style="background-color: red;"></input> <span id="wipeChat"></span>
 </div>
