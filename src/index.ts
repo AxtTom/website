@@ -303,11 +303,11 @@ async function main() {
                 }
                 else {
                     const emailBlock = global.emailBlock.find(x => x.email === req.body.email);
-                    if (emailBlock && emailBlock.lastUsed + global.cooldownEmail < Date.now()) {
-                        global.emailBlock = global.emailBlock.filter(x => x.email !== req.body.email);
+                    if (emailBlock && emailBlock.lastUsed + global.cooldownEmail > Date.now()) {
+                        errors.push('Too many requests. Please try again later.');
                     }
                     else {
-                        errors.push('Too many requests. Please try again later.');
+                        global.emailBlock = global.emailBlock.filter(x => x.email !== req.body.email);
                     }
 
                     if (errors.length > 0) {
@@ -422,11 +422,11 @@ async function main() {
             }
 
             const emailBlock = global.emailBlock.find(x => x.email === req.body.email);
-            if (emailBlock && emailBlock.lastUsed + global.cooldownEmail < Date.now()) {
-                global.emailBlock = global.emailBlock.filter(x => x.email !== req.body.email);
+            if (emailBlock && emailBlock.lastUsed + global.cooldownEmail > Date.now()) {
+                errors.push('Too many requests. Please try again later.');
             }
             else {
-                errors.push('Too many requests. Please try again later.');
+                global.emailBlock = global.emailBlock.filter(x => x.email !== req.body.email);
             }
 
             if (errors.length > 0) {
