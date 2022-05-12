@@ -298,7 +298,7 @@ async function main() {
                 }
                 else {
                     const emailBlock = global.emailBlock.find(x => x.email === req.body.email);
-                    if (!emailBlock || emailBlock.lastUsed + global.cooldownEmail < Date.now()) {
+                    if (emailBlock && emailBlock.lastUsed + global.cooldownEmail < Date.now()) {
                         global.emailBlock = global.emailBlock.filter(x => x.email !== req.body.email);
                     }
                     else {
@@ -410,7 +410,7 @@ async function main() {
             }
 
             const emailBlock = global.emailBlock.find(x => x.email === req.body.email);
-            if (!emailBlock || emailBlock.lastUsed + global.cooldownEmail < Date.now()) {
+            if (emailBlock && emailBlock.lastUsed + global.cooldownEmail < Date.now()) {
                 global.emailBlock = global.emailBlock.filter(x => x.email !== req.body.email);
             }
             else {
@@ -573,7 +573,7 @@ async function main() {
 
     app.get('*', async (req, res) => {
         let session = req.cookies.token ? await global.sessions.get({ token: req.cookies.token }) : null;
-        if (!session || !session.lastUsed || session.lastUsed + (1000 * 60 * 60 * 24 * 3) < Date.now()) {
+        if (session && session.lastUsed && session.lastUsed + (1000 * 60 * 60 * 24 * 3) < Date.now()) {
             global.sessions.remove({ _id: session._id });
             session = null;
         }
