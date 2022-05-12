@@ -15,6 +15,7 @@ import cookieParser from 'cookie-parser';
 import multer from 'multer';
 import * as nodemailer from 'nodemailer';
 import * as crypto from 'crypto';
+import * as argon from 'argon2';
 
 export interface Site {
     name: string,
@@ -27,6 +28,9 @@ export interface Site {
 }
 
 global.pending = [];
+global.emailBlock = [];
+
+global.cooldownEmail = 1000 * 60 * 5;
 
 const mongo = new MongoClient('mongodb://localhost:27017');
 
@@ -215,12 +219,19 @@ async function main() {
                 res.end();
             }
             else {
-                const hash = crypto.createHash('sha256').update(password + email + process.env.PEPPER).digest('hex');
-                if (hash !== user.password) {
-                    res.send({
-                        success: false,
-                        errors: [ 'Wrong password' ]
-                    });
+                if (await argon.verify(user.password, password + email + process.env.PEPPER)) {
+                    if (!user.password.startsWith('$argon2')) {
+                        res.send({
+                            success: false,
+                            errors: [ 'Please reset your password' ]
+                        });
+                    }
+                    else {
+                        res.send({
+                            success: false,
+                            errors: [ 'Wrong password' ]
+                        });
+                    }
                     res.end();
                 }
                 else {
@@ -286,23 +297,41 @@ async function main() {
                     });
                 }
                 else {
-                    const secret = crypto.randomBytes(20).toString('hex')
-                    global.mailer.sendMail({
-                        from: '"noreply" <noreply@axttom.de>',
-                        to: req.body.email,
-                        subject: 'Account activation',
-                        text: 'Confirm here: https://axttom.de/activation?secret=' + secret
-                    });
-                    global.pending = global.pending.filter(x => x.email !== req.body.email);
-                    global.pending.push({
-                        username: req.body.username,
-                        email: req.body.email,
-                        password: crypto.createHash('sha256').update(req.body.password[0] + req.body.email + process.env.PEPPER).digest('hex'),
-                        secret
-                    });
-                    res.send({
-                        success: true
-                    });
+                    const emailBlock = global.emailBlock.find(x => x.email === req.body.email);
+                    if (emailBlock.lastUsed + global.cooldownEmail < Date.now()) {
+                        global.emailBlock = global.emailBlock.filter(x => x.email !== req.body.email);
+                    }
+                    else {
+                        errors.push('Too many requests. Please try again later.');
+                    }
+
+                    if (errors.length > 0) {
+                        res.send({
+                            success: false,
+                            errors
+                        });
+                    }
+                    else {
+                        const secret = crypto.randomBytes(20).toString('hex')
+                        global.mailer.sendMail({
+                            from: '"noreply" <noreply@axttom.de>',
+                            to: req.body.email,
+                            subject: 'Account activation',
+                            text: 'Confirm here: https://axttom.de/activation?secret=' + secret
+                        });
+                        global.emailBlock.push({ email: req.body.email, lastUsed: Date.now() });
+                        global.pending = global.pending.filter(x => x.email !== req.body.email);
+                        global.pending.push({
+                            username: req.body.username,
+                            email: req.body.email,
+                            //password: crypto.createHash('sha256').update(req.body.password[0] + req.body.email + process.env.PEPPER).digest('hex'),
+                            password: await argon.hash(req.body.password[0] + req.body.email + process.env.PEPPER),
+                            secret
+                        });
+                        res.send({
+                            success: true
+                        });
+                    }
                 }
             }
         }
@@ -347,8 +376,8 @@ async function main() {
             return;
         }
 
-        if (crypto.createHash('sha256').update(req.body.oldpassword + user.email + process.env.PEPPER).digest('hex') !== user.password) 
-            errors.push('Password is not correct');
+        //if (crypto.createHash('sha256').update(req.body.oldpassword + user.email + process.env.PEPPER).digest('hex') !== user.password) errors.push('Password is not correct');
+        if (!await argon.verify(user.password, req.body.oldpassword + user.email + process.env.PEPPER)) errors.push('Old password is incorrect');
 
         if (errors.length > 0) {
             res.send({
@@ -359,7 +388,8 @@ async function main() {
             return;
         }
 
-        const hash = crypto.createHash('sha256').update(req.body.newpassword + user.email + process.env.PEPPER).digest('hex');
+        //const hash = crypto.createHash('sha256').update(req.body.newpassword + user.email + process.env.PEPPER).digest('hex');
+        const hash = await argon.hash(req.body.newpassword + user.email + process.env.PEPPER);
         global.users.set({ _id: user._id }, { password: hash }).then(() => {
             res.send({
                 success: true,
@@ -379,6 +409,14 @@ async function main() {
                     errors.push('Email is not registered');
             }
 
+            const emailBlock = global.emailBlock.find(x => x.email === req.body.email);
+            if (emailBlock.lastUsed + global.cooldownEmail < Date.now()) {
+                global.emailBlock = global.emailBlock.filter(x => x.email !== req.body.email);
+            }
+            else {
+                errors.push('Too many requests. Please try again later.');
+            }
+
             if (errors.length > 0) {
                 res.send({
                     success: false,
@@ -394,6 +432,10 @@ async function main() {
                 to: req.body.email,
                 subject: 'Reset password',
                 text: 'Confirm here: https://axttom.de/forgotpassword?reset=' + reset
+            });
+            global.emailBlock.push({
+                email: req.body.email,
+                lastUsed: Date.now()
             });
             global.pending = global.pending.filter(x => x.email !== req.body.email);
             global.pending.push({
@@ -430,7 +472,8 @@ async function main() {
 
                     if (!user) errors.push('Error resetting password');
                     else {
-                        const hash = crypto.createHash('sha256').update(password + user.email + process.env.PEPPER).digest('hex');
+                        //const hash = crypto.createHash('sha256').update(password + user.email + process.env.PEPPER).digest('hex');
+                        const hash = await argon.hash(password + user.email + process.env.PEPPER);
                         global.users.set({ email: user.email }, { password: hash }).then(() => {
                             res.send({
                                 success: true
@@ -529,7 +572,11 @@ async function main() {
     });
 
     app.get('*', async (req, res) => {
-        const session = req.cookies.token ? await global.sessions.get({ token: req.cookies.token }) : null;
+        let session = req.cookies.token ? await global.sessions.get({ token: req.cookies.token }) : null;
+        if (session.lastUsed + (1000 * 60 * 60 * 24 * 3) < Date.now()) {
+            global.sessions.remove({ _id: session._id });
+            session = null;
+        }
         const user = session ? await global.users.get({ _id: session.user }) : null;
         
         const sites = rawSites.filter(x => !x.adminOnly || (user && user.admin));

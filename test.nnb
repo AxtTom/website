@@ -3,7 +3,7 @@
         {
             "language": "typescript",
             "source": [
-                "import * as argon from 'argon2';\n\n(async () => {\n    const str = \"Test1234\";\n    \n    const hash = await argon.hash(str, { hashLength: 32 });\n\n        console.log(hash);\n        console.log(await argon.verify(hash, str))\n})();"
+                "import * as argon from 'argon2';\r\n\r\n(async () => {\r\n    const str = \"Test1234\";\r\n    \r\n    const hash = await argon.hash(str, { hashLength: 64 });\r\n\r\n    console.log(await argon.verify(hash, str));\r\n    console.log(hash);\r\n})();"
             ],
             "outputs": [
                 {
@@ -11,8 +11,9 @@
                         {
                             "mime": "application/vnd.code.notebook.stdout",
                             "value": [
-                                "$argon2i$v=19$m=4096,t=3,p=1$Huee5f2flNTbMJVUht/kqw$c/vXOwqFt6GopI7tu+pXfvIzL+o6wXcFsrSudoJNgGw",
                                 "true",
+                                "$argon2i$v=19$m=4096,t=3,p=1$mWQt+QzA9EMa8ygV8svx8g$rBtdAGsekWf/JvT/rZ6G30BQys9MU5izEmKnc34+BxRj8rm0UEBLX65mGs2aRSwpgxPKsBMSXCg2Z2VZRvyn5g",
+                                "",
                                 ""
                             ]
                         }

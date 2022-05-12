@@ -12,6 +12,13 @@ declare global {
     var mailer: nodemailer.Transporter;
 
     var pending: any[];
+    var emailBlock: {
+        email: string,
+        lastUsed: number
+    }[];
+
+    var cooldownEmail: number;
+    //var cooldownLogin: number;
 }
 
 export {};
