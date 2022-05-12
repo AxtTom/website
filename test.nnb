@@ -1,0 +1,24 @@
+{
+    "cells": [
+        {
+            "language": "typescript",
+            "source": [
+                "import * as argon from 'argon2';\n\n(async () => {\n    const str = \"Test1234\";\n    \n    const hash = await argon.hash(str, { hashLength: 32 });\n\n        console.log(hash);\n        console.log(await argon.verify(hash, str))\n})();"
+            ],
+            "outputs": [
+                {
+                    "items": [
+                        {
+                            "mime": "application/vnd.code.notebook.stdout",
+                            "value": [
+                                "$argon2i$v=19$m=4096,t=3,p=1$Huee5f2flNTbMJVUht/kqw$c/vXOwqFt6GopI7tu+pXfvIzL+o6wXcFsrSudoJNgGw",
+                                "true",
+                                ""
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}
