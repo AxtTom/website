@@ -219,12 +219,12 @@ async function main() {
                 res.end();
             }
             else {
-                let match;
+                let match = false;
                 try {
                     match = await argon.verify(user.password, password + email + process.env.PEPPER);
                 }
                 catch {}
-                if (match) {
+                if (!match) {
                     if (!user.password.startsWith('$argon2')) {
                         res.send({
                             success: false,
@@ -382,12 +382,12 @@ async function main() {
         }
 
         //if (crypto.createHash('sha256').update(req.body.oldpassword + user.email + process.env.PEPPER).digest('hex') !== user.password) errors.push('Password is not correct');
-        let match;
+        let match = false;
         try {
             match = await argon.verify(user.password, req.body.oldpassword + user.email + process.env.PEPPER);
         }
         catch {}
-        if (match) {
+        if (!match) {
             errors.push('Old password is incorrect');
         }
 
