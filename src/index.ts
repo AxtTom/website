@@ -16,6 +16,9 @@ import multer from 'multer';
 import * as nodemailer from 'nodemailer';
 import * as crypto from 'crypto';
 import * as argon from 'argon2';
+import * as url from 'url';
+import * as im from 'imagemagick';
+import sharp from 'sharp';
 
 export interface Site {
     name: string,
@@ -583,6 +586,47 @@ async function main() {
         }
     });
 
+    app.get('/image/*', async (req, res) => {
+        const filename = url.parse(req.url).pathname.slice(7);
+        if (fs.existsSync(`${__dirname}/../images/${filename}`)) {
+            const data = fs.readFileSync(`${__dirname}/../images/${filename}`, 'binary');
+
+            im.identify(`${__dirname}/../images/${filename}`, async (err, features) => {
+                if (err) {
+                    console.log(err)
+                    res.sendStatus(500);
+                }
+                else {
+                    let width: number = 0;
+
+                    if (req.query.maxWidth) {
+                        width = Math.min(features.width, req.query.maxWidth as any);
+                    }
+
+                    if (width == 0) {
+                        res.contentType('image/' + features.format);
+                        res.end(data, 'binary');
+                    }
+
+                    sharp(`${__dirname}/../images/${filename}`)
+                    .resize(width)
+                    .toBuffer()
+                    .then((buffer) => {
+                        res.contentType('image/' + features.format);
+                        res.end(buffer, 'binary');
+                    })
+                    .catch((err) => {
+                        console.error(err);
+                        res.sendStatus(500);
+                    });
+                }
+            });
+        }
+        else {
+            res.sendStatus(404);
+        }
+    });
+
     app.get('*', async (req, res) => {
         let session = req.cookies.token ? await global.sessions.get({ token: req.cookies.token }) : null;
         if (session && session.lastUsed && session.lastUsed + (1000 * 60 * 60 * 24 * 3) < Date.now()) {
@@ -611,7 +655,7 @@ async function main() {
         res.end();
     });
 
-    server.listen(8445, process.env.DEBUG  ? '0.0.0.0' : 'localhost', () => {
+    server.listen(process.env.DEBUG ? 8989 : 8445, process.env.DEBUG  ? '0.0.0.0' : 'localhost', () => {
         console.log('Server running!');
     });
 
