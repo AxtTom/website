@@ -597,13 +597,13 @@ async function main() {
                     res.sendStatus(500);
                 }
                 else {
-                    let width: number = 0;
+                    let width: number = features.width;
 
                     if (req.query.maxWidth) {
                         width = Math.min(features.width, req.query.maxWidth as any);
                     }
 
-                    if (width == 0) {
+                    if (width == features.width) {
                         res.contentType('image/' + features.format);
                         res.end(data, 'binary');
                     }
